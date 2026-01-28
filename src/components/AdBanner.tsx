@@ -1,12 +1,18 @@
 import { View, StyleSheet, Text } from 'react-native';
+
 import { BannerAd, BannerAdSize, getBannerAdUnitId } from '../utils/ads';
-import { useSoundStore } from '../stores/soundStore';
+import { useSoundStore, selectIsPremium } from '../stores/soundStore';
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../constants/theme';
+
+// =============================================================================
+// AD BANNER - Production
+// =============================================================================
 
 /**
  * Ad Banner component - only shows for free users
  */
 export function AdBanner() {
-  const isPremium = useSoundStore((state) => state.isPremium);
+  const isPremium = useSoundStore(selectIsPremium);
   
   // Don't show ads to premium users
   if (isPremium) {
@@ -29,13 +35,19 @@ export function AdBanner() {
   );
 }
 
+// =============================================================================
+// AD BANNER PLACEHOLDER - Development
+// =============================================================================
+
 /**
  * Placeholder for development/testing
  */
 export function AdBannerPlaceholder() {
-  const isPremium = useSoundStore((state) => state.isPremium);
+  const isPremium = useSoundStore(selectIsPremium);
   
-  if (isPremium) return null;
+  if (isPremium) {
+    return null;
+  }
   
   return (
     <View style={styles.placeholder}>
@@ -44,20 +56,26 @@ export function AdBannerPlaceholder() {
   );
 }
 
+// =============================================================================
+// STYLES
+// =============================================================================
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholder: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 16,
+    backgroundColor: COLORS.neutral[100],
+    padding: SPACING.lg,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 50,
+    borderRadius: RADIUS.md,
+    marginHorizontal: SPACING.lg,
   },
   placeholderText: {
-    color: '#666',
-    fontSize: 12,
+    color: COLORS.text.muted,
+    fontSize: TYPOGRAPHY.size.sm,
   },
 });

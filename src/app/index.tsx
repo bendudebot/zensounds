@@ -2,12 +2,32 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import Animated, { FadeIn } from 'react-native-reanimated';
+
 import { SoundCard } from '../components/SoundCard';
 import { CategoryHeader } from '../components/CategoryHeader';
 import { NowPlaying } from '../components/NowPlaying';
 import { TimerButton } from '../components/TimerButton';
 import { useSoundStore } from '../stores/soundStore';
-import { SOUNDS, CATEGORIES } from '../constants/sounds';
+import { SOUNDS, CATEGORIES, getSoundsByCategory } from '../constants/sounds';
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS, LAYOUT } from '../constants/theme';
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 5) return 'Good night';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Good night';
+};
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -15,14 +35,14 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={[COLORS.background.start, COLORS.background.middle, COLORS.background.end]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good evening</Text>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.title}>ZenSounds</Text>
           </View>
           <View style={styles.headerButtons}>
@@ -32,43 +52,52 @@ export default function HomeScreen() {
                 style={styles.premiumBtn}
                 onPress={() => router.push('/premium')}
               >
-                <Text style={styles.premiumText}>PRO</Text>
+                <Text style={styles.premiumText}>✨ PRO</Text>
               </Pressable>
             )}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Sound Categories */}
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          {CATEGORIES.map((category) => (
-            <View key={category.id} style={styles.categorySection}>
-              <CategoryHeader 
-                title={category.name} 
-                icon={category.icon}
-              />
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.soundsRow}
+          {CATEGORIES.map((category, index) => {
+            const categorySounds = getSoundsByCategory(category.id);
+            
+            return (
+              <Animated.View 
+                key={category.id} 
+                entering={FadeIn.delay(index * 100).duration(500)}
+                style={styles.categorySection}
               >
-                {SOUNDS.filter(s => s.category === category.id).map((sound) => (
-                  <SoundCard
-                    key={sound.id}
-                    sound={sound}
-                    isPlaying={playingIds.includes(sound.id)}
-                    isPremium={sound.premium}
-                    isLocked={sound.premium && !isPremium}
-                  />
-                ))}
-              </ScrollView>
-            </View>
-          ))}
+                <CategoryHeader 
+                  title={category.name} 
+                  icon={category.icon}
+                />
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.soundsRow}
+                >
+                  {categorySounds.map((sound) => (
+                    <SoundCard
+                      key={sound.id}
+                      sound={sound}
+                      isPlaying={playingIds.includes(sound.id)}
+                      isPremium={sound.premium}
+                      isLocked={sound.premium && !isPremium}
+                    />
+                  ))}
+                </ScrollView>
+              </Animated.View>
+            );
+          })}
           
-          {/* Spacer for NowPlaying bar */}
-          <View style={{ height: 120 }} />
+          {/* Bottom spacer for NowPlaying bar */}
+          <View style={styles.bottomSpacer} />
         </ScrollView>
 
         {/* Now Playing Bar */}
@@ -77,6 +106,10 @@ export default function HomeScreen() {
     </LinearGradient>
   );
 }
+
+// =============================================================================
+// STYLES
+// =============================================================================
 
 const styles = StyleSheet.create({
   container: {
@@ -89,44 +122,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
   greeting: {
-    fontSize: 14,
-    color: '#a0a0a0',
-    marginBottom: 4,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.medium,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: TYPOGRAPHY.size.xxxl,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.text.primary,
+    letterSpacing: -0.5,
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
   },
   premiumBtn: {
-    backgroundColor: '#e94560',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.round,
   },
   premiumText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: COLORS.text.inverse,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    fontSize: TYPOGRAPHY.size.sm,
   },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingTop: SPACING.sm,
+  },
   categorySection: {
-    marginBottom: 24,
+    marginBottom: SPACING.xxxl,
   },
   soundsRow: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+  bottomSpacer: {
+    height: LAYOUT.nowPlayingHeight + LAYOUT.nowPlayingBottomPadding + SPACING.xl,
   },
 });

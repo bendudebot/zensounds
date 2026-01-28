@@ -1,44 +1,71 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Audio, AVPlaybackSource } from 'expo-av';
-import { SOUNDS } from '../constants/sounds';
+import { Audio } from 'expo-av';
+
+import { SOUNDS, SoundId, getSoundById } from '../constants/sounds';
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface SoundInstance {
-  id: string;
+  id: SoundId;
   sound: Audio.Sound;
 }
 
-interface SoundStore {
-  // State
-  playingIds: string[];
-  volumes: Record<string, number>;
-  isPremium: boolean;
+interface SoundStoreState {
+  // Playback state
+  playingIds: SoundId[];
+  soundInstances: SoundInstance[];
+  volumes: Record<SoundId, number>;
+  
+  // Timer state
   timerMinutes: number;
   timerRemaining: number | null;
-  soundInstances: SoundInstance[];
   
-  // Actions
+  // User state
+  isPremium: boolean;
+}
+
+interface SoundStoreActions {
   initialize: () => Promise<void>;
-  toggleSound: (id: string) => Promise<void>;
-  setVolume: (id: string, volume: number) => Promise<void>;
+  toggleSound: (id: SoundId) => Promise<void>;
+  setVolume: (id: SoundId, volume: number) => Promise<void>;
   stopAll: () => Promise<void>;
   setTimer: (minutes: number) => void;
   setPremium: (value: boolean) => void;
 }
+
+type SoundStore = SoundStoreState & SoundStoreActions;
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const DEFAULT_VOLUME = 0.7;
+const SECONDS_PER_MINUTE = 60;
+const TIMER_INTERVAL_MS = 1000;
+const STORAGE_KEY = 'zensounds-storage';
+
+// =============================================================================
+// STORE
+// =============================================================================
 
 export const useSoundStore = create<SoundStore>()(
   persist(
     (set, get) => ({
       // Initial state
       playingIds: [],
-      volumes: {},
-      isPremium: false,
+      soundInstances: [],
+      volumes: {} as Record<SoundId, number>,
       timerMinutes: 0,
       timerRemaining: null,
-      soundInstances: [],
+      isPremium: false,
 
-      // Initialize audio
+      /**
+       * Initialize audio system
+       */
       initialize: async () => {
         try {
           await Audio.setAudioModeAsync({
@@ -51,16 +78,23 @@ export const useSoundStore = create<SoundStore>()(
         }
       },
 
-      // Toggle sound on/off
-      toggleSound: async (id: string) => {
+      /**
+       * Toggle a sound on/off
+       */
+      toggleSound: async (id: SoundId) => {
         const { playingIds, volumes, soundInstances } = get();
+        const isPlaying = playingIds.includes(id);
         
-        if (playingIds.includes(id)) {
+        if (isPlaying) {
           // Stop this sound
           const instance = soundInstances.find(s => s.id === id);
           if (instance) {
-            await instance.sound.stopAsync();
-            await instance.sound.unloadAsync();
+            try {
+              await instance.sound.stopAsync();
+              await instance.sound.unloadAsync();
+            } catch (error) {
+              console.error(`Failed to stop sound ${id}:`, error);
+            }
           }
           
           set({
@@ -69,15 +103,18 @@ export const useSoundStore = create<SoundStore>()(
           });
         } else {
           // Start this sound
-          const soundConfig = SOUNDS.find(s => s.id === id);
-          if (!soundConfig) return;
+          const soundConfig = getSoundById(id);
+          if (!soundConfig) {
+            console.warn(`Sound not found: ${id}`);
+            return;
+          }
           
           try {
             const { sound } = await Audio.Sound.createAsync(
               { uri: soundConfig.url },
               {
                 isLooping: true,
-                volume: volumes[id] ?? 0.7,
+                volume: volumes[id] ?? DEFAULT_VOLUME,
               }
             );
             
@@ -88,37 +125,49 @@ export const useSoundStore = create<SoundStore>()(
               soundInstances: [...soundInstances, { id, sound }],
             });
           } catch (error) {
-            console.error('Failed to play sound:', error);
+            console.error(`Failed to play sound ${id}:`, error);
           }
         }
       },
 
-      // Set volume for a sound
-      setVolume: async (id: string, volume: number) => {
+      /**
+       * Set volume for a specific sound
+       */
+      setVolume: async (id: SoundId, volume: number) => {
         const { soundInstances, volumes } = get();
-        const instance = soundInstances.find(s => s.id === id);
+        const normalizedVolume = Math.max(0, Math.min(1, volume));
         
+        const instance = soundInstances.find(s => s.id === id);
         if (instance) {
-          await instance.sound.setVolumeAsync(volume);
+          try {
+            await instance.sound.setVolumeAsync(normalizedVolume);
+          } catch (error) {
+            console.error(`Failed to set volume for ${id}:`, error);
+          }
         }
         
         set({
-          volumes: { ...volumes, [id]: volume },
+          volumes: { ...volumes, [id]: normalizedVolume },
         });
       },
 
-      // Stop all sounds
+      /**
+       * Stop all playing sounds
+       */
       stopAll: async () => {
         const { soundInstances } = get();
         
-        for (const instance of soundInstances) {
-          try {
-            await instance.sound.stopAsync();
-            await instance.sound.unloadAsync();
-          } catch (error) {
-            console.error('Failed to stop sound:', error);
-          }
-        }
+        // Stop all sounds in parallel
+        await Promise.all(
+          soundInstances.map(async (instance) => {
+            try {
+              await instance.sound.stopAsync();
+              await instance.sound.unloadAsync();
+            } catch (error) {
+              console.error(`Failed to stop sound ${instance.id}:`, error);
+            }
+          })
+        );
         
         set({
           playingIds: [],
@@ -128,11 +177,15 @@ export const useSoundStore = create<SoundStore>()(
         });
       },
 
-      // Set sleep timer
+      /**
+       * Set sleep timer
+       */
       setTimer: (minutes: number) => {
+        const timerSeconds = minutes > 0 ? minutes * SECONDS_PER_MINUTE : null;
+        
         set({
           timerMinutes: minutes,
-          timerRemaining: minutes > 0 ? minutes * 60 : null,
+          timerRemaining: timerSeconds,
         });
         
         if (minutes > 0) {
@@ -147,18 +200,21 @@ export const useSoundStore = create<SoundStore>()(
             }
             
             set({ timerRemaining: timerRemaining - 1 });
-          }, 1000);
+          }, TIMER_INTERVAL_MS);
         }
       },
 
-      // Set premium status
+      /**
+       * Set premium status
+       */
       setPremium: (value: boolean) => {
         set({ isPremium: value });
       },
     }),
     {
-      name: 'zensounds-storage',
+      name: STORAGE_KEY,
       storage: createJSONStorage(() => AsyncStorage),
+      // Only persist these fields
       partialize: (state) => ({
         volumes: state.volumes,
         isPremium: state.isPremium,
@@ -166,3 +222,12 @@ export const useSoundStore = create<SoundStore>()(
     }
   )
 );
+
+// =============================================================================
+// SELECTORS (for optimized re-renders)
+// =============================================================================
+
+export const selectPlayingIds = (state: SoundStore) => state.playingIds;
+export const selectIsPremium = (state: SoundStore) => state.isPremium;
+export const selectTimerRemaining = (state: SoundStore) => state.timerRemaining;
+export const selectIsPlaying = (state: SoundStore) => state.playingIds.length > 0;

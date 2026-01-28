@@ -2,20 +2,70 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import { useSoundStore } from '../stores/soundStore';
+import Animated, { 
+  FadeIn, 
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
-const TIMER_OPTIONS = [
+import { useSoundStore } from '../stores/soundStore';
+import { 
+  COLORS, 
+  SPACING, 
+  TYPOGRAPHY, 
+  RADIUS, 
+  SHADOWS,
+  ANIMATION,
+} from '../constants/theme';
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+interface TimerOption {
+  label: string;
+  minutes: number;
+}
+
+const TIMER_OPTIONS: readonly TimerOption[] = [
   { label: '15 min', minutes: 15 },
   { label: '30 min', minutes: 30 },
   { label: '45 min', minutes: 45 },
   { label: '1 hour', minutes: 60 },
   { label: '2 hours', minutes: 120 },
   { label: 'Off', minutes: 0 },
-];
+] as const;
+
+const SECONDS_PER_MINUTE = 60;
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+const formatTimeRemaining = (seconds: number): string => {
+  const mins = Math.floor(seconds / SECONDS_PER_MINUTE);
+  const secs = seconds % SECONDS_PER_MINUTE;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
 
 export function TimerButton() {
   const [showModal, setShowModal] = useState(false);
   const { timerMinutes, setTimer, timerRemaining } = useSoundStore();
+  const buttonScale = useSharedValue(1);
+
+  const handleOpenModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    buttonScale.value = withSpring(0.95, ANIMATION.spring.gentle, () => {
+      buttonScale.value = withSpring(1, ANIMATION.spring.gentle);
+    });
+    setShowModal(true);
+  };
 
   const handleSelectTimer = (minutes: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -23,23 +73,21 @@ export function TimerButton() {
     setShowModal(false);
   };
 
-  const formatRemaining = () => {
-    if (!timerRemaining) return null;
-    const mins = Math.floor(timerRemaining / 60);
-    const secs = timerRemaining % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const buttonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  const isActive = timerMinutes > 0;
 
   return (
     <>
-      <Pressable 
-        style={[styles.button, timerMinutes > 0 && styles.buttonActive]}
-        onPress={() => setShowModal(true)}
-      >
-        <Text style={styles.icon}>⏰</Text>
-        {timerRemaining && (
-          <Text style={styles.timerText}>{formatRemaining()}</Text>
-        )}
+      <Pressable onPress={handleOpenModal}>
+        <Animated.View style={[styles.button, isActive && styles.buttonActive, buttonStyle]}>
+          <Text style={styles.icon}>⏰</Text>
+          {timerRemaining !== null && (
+            <Text style={styles.timerText}>{formatTimeRemaining(timerRemaining)}</Text>
+          )}
+        </Animated.View>
       </Pressable>
 
       <Modal
@@ -52,109 +100,120 @@ export function TimerButton() {
           style={styles.modalOverlay}
           onPress={() => setShowModal(false)}
         >
-          <View style={styles.modalContent}>
+          <Animated.View 
+            entering={FadeIn.duration(ANIMATION.duration.fast)}
+            exiting={FadeOut.duration(ANIMATION.duration.fast)}
+            style={styles.modalContent}
+          >
             <Text style={styles.modalTitle}>Sleep Timer</Text>
             <Text style={styles.modalSubtitle}>
-              Sounds will stop after the selected time
+              Sounds will gently fade out after the selected time
             </Text>
             
             <View style={styles.optionsGrid}>
-              {TIMER_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.minutes}
-                  style={[
-                    styles.optionButton,
-                    timerMinutes === option.minutes && styles.optionActive,
-                  ]}
-                  onPress={() => handleSelectTimer(option.minutes)}
-                >
-                  <Text style={[
-                    styles.optionText,
-                    timerMinutes === option.minutes && styles.optionTextActive,
-                  ]}>
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
+              {TIMER_OPTIONS.map((option) => {
+                const isSelected = timerMinutes === option.minutes;
+                
+                return (
+                  <Pressable
+                    key={option.minutes}
+                    style={[styles.optionButton, isSelected && styles.optionActive]}
+                    onPress={() => handleSelectTimer(option.minutes)}
+                  >
+                    <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-          </View>
+          </Animated.View>
         </Pressable>
       </Modal>
     </>
   );
 }
 
+// =============================================================================
+// STYLES
+// =============================================================================
+
 const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
+    backgroundColor: COLORS.white[50],
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.round,
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.neutral[200],
   },
   buttonActive: {
-    backgroundColor: 'rgba(233, 69, 96, 0.3)',
+    backgroundColor: COLORS.primary.light,
+    borderColor: COLORS.primary.main,
   },
   icon: {
     fontSize: 16,
   },
   timerText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: COLORS.text.primary,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: COLORS.black[50],
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: SPACING.xl,
   },
   modalContent: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: COLORS.background.card,
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.xxl,
     width: '100%',
     maxWidth: 340,
+    ...SHADOWS.lg,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.text.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
   modalSubtitle: {
-    fontSize: 14,
-    color: '#a0a0a0',
+    fontSize: TYPOGRAPHY.size.md,
+    color: COLORS.text.secondary,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
+    lineHeight: 22,
   },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: SPACING.md,
     justifyContent: 'center',
   },
   optionButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 16,
+    backgroundColor: COLORS.neutral[100],
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADIUS.lg,
     minWidth: 90,
     alignItems: 'center',
   },
   optionActive: {
-    backgroundColor: '#e94560',
+    backgroundColor: COLORS.primary.main,
   },
   optionText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: COLORS.text.primary,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
   optionTextActive: {
-    color: '#ffffff',
+    color: COLORS.text.inverse,
   },
 });

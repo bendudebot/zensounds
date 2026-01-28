@@ -1,222 +1,113 @@
+import { SOUND_GRADIENTS } from './theme';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
 export interface Sound {
-  id: string;
+  id: SoundId;
   name: string;
   icon: string;
-  category: string;
+  category: CategoryId;
   premium: boolean;
-  gradient: [string, string];
-  activeGradient: [string, string];
-  // URL to sound file - use freesound.org or similar royalty-free sources
+  gradient: readonly [string, string];
+  activeGradient: readonly [string, string];
   url: string;
 }
 
 export interface Category {
-  id: string;
+  id: CategoryId;
   name: string;
   icon: string;
 }
 
-export const CATEGORIES: Category[] = [
+// Type-safe IDs
+export type CategoryId = 'sleep' | 'nature' | 'focus' | 'ambient';
+
+export type SoundId =
+  | 'rain' | 'thunder' | 'ocean' | 'fan' | 'whitenoise'
+  | 'birds' | 'forest' | 'river' | 'wind' | 'campfire'
+  | 'coffee-shop' | 'library' | 'keyboard' | 'office'
+  | 'chimes' | 'singing-bowl' | 'space' | 'underwater';
+
+// =============================================================================
+// CATEGORIES
+// =============================================================================
+
+export const CATEGORIES: readonly Category[] = [
   { id: 'sleep', name: 'Sleep', icon: '🌙' },
   { id: 'nature', name: 'Nature', icon: '🌿' },
   { id: 'focus', name: 'Focus', icon: '🎯' },
-  { id: 'ambient', name: 'Ambient', icon: '🎶' },
-];
+  { id: 'ambient', name: 'Ambient', icon: '✨' },
+] as const;
 
-// Note: In production, these would be actual audio files
-// For now, using placeholder require statements
-// You'll need to add actual .mp3/.wav files to assets/sounds/
+// =============================================================================
+// SOUND DATA
+// =============================================================================
 
-export const SOUNDS: Sound[] = [
-  // Sleep sounds (Free)
-  {
-    id: 'rain',
-    name: 'Rain',
-    icon: '🌧️',
-    category: 'sleep',
-    premium: false,
-    gradient: ['#667eea', '#764ba2'],
-    activeGradient: ['#764ba2', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'thunder',
-    name: 'Thunder',
-    icon: '⛈️',
-    category: 'sleep',
-    premium: false,
-    gradient: ['#4a5568', '#2d3748'],
-    activeGradient: ['#2d3748', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'ocean',
-    name: 'Ocean Waves',
-    icon: '🌊',
-    category: 'sleep',
-    premium: false,
-    gradient: ['#0077b6', '#023e8a'],
-    activeGradient: ['#023e8a', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'fan',
-    name: 'Fan',
-    icon: '🌀',
-    category: 'sleep',
-    premium: false,
-    gradient: ['#6c757d', '#495057'],
-    activeGradient: ['#495057', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'whitenoise',
-    name: 'White Noise',
-    icon: '📺',
-    category: 'sleep',
-    premium: false,
-    gradient: ['#718096', '#4a5568'],
-    activeGradient: ['#4a5568', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  
+// Base URL for sound files (replace with actual CDN in production)
+const SOUND_BASE_URL = 'https://cdn.freesound.org/previews';
+const PLACEHOLDER_URL = `${SOUND_BASE_URL}/placeholder.mp3`;
+
+// Helper to create sound object with less repetition
+const createSound = (
+  id: SoundId,
+  name: string,
+  icon: string,
+  category: CategoryId,
+  premium: boolean,
+  url: string = PLACEHOLDER_URL
+): Sound => ({
+  id,
+  name,
+  icon,
+  category,
+  premium,
+  gradient: SOUND_GRADIENTS[id]?.default ?? ['#E0E5F0', '#D0D5E0'],
+  activeGradient: SOUND_GRADIENTS[id]?.active ?? ['#D0D5E0', '#C0C5D0'],
+  url,
+});
+
+export const SOUNDS: readonly Sound[] = [
+  // Sleep sounds (mostly free)
+  createSound('rain', 'Rain', '🌧️', 'sleep', false),
+  createSound('thunder', 'Thunder', '⛈️', 'sleep', false),
+  createSound('ocean', 'Ocean Waves', '🌊', 'sleep', false),
+  createSound('fan', 'Fan', '🌀', 'sleep', false),
+  createSound('whitenoise', 'White Noise', '📻', 'sleep', false),
+
   // Nature sounds
-  {
-    id: 'birds',
-    name: 'Birds',
-    icon: '🐦',
-    category: 'nature',
-    premium: false,
-    gradient: ['#38a169', '#276749'],
-    activeGradient: ['#276749', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'forest',
-    name: 'Forest',
-    icon: '🌲',
-    category: 'nature',
-    premium: false,
-    gradient: ['#2d5a27', '#1a3c18'],
-    activeGradient: ['#1a3c18', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'river',
-    name: 'River',
-    icon: '🏞️',
-    category: 'nature',
-    premium: true,
-    gradient: ['#2193b0', '#6dd5ed'],
-    activeGradient: ['#6dd5ed', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'wind',
-    name: 'Wind',
-    icon: '💨',
-    category: 'nature',
-    premium: true,
-    gradient: ['#bdc3c7', '#95a5a6'],
-    activeGradient: ['#95a5a6', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'campfire',
-    name: 'Campfire',
-    icon: '🔥',
-    category: 'nature',
-    premium: true,
-    gradient: ['#f39c12', '#e74c3c'],
-    activeGradient: ['#e74c3c', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  
-  // Focus sounds
-  {
-    id: 'coffee-shop',
-    name: 'Coffee Shop',
-    icon: '☕',
-    category: 'focus',
-    premium: false,
-    gradient: ['#8b4513', '#5d3a1a'],
-    activeGradient: ['#5d3a1a', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'library',
-    name: 'Library',
-    icon: '📚',
-    category: 'focus',
-    premium: false,
-    gradient: ['#8b7355', '#6b5344'],
-    activeGradient: ['#6b5344', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'keyboard',
-    name: 'Typing',
-    icon: '⌨️',
-    category: 'focus',
-    premium: true,
-    gradient: ['#3d3d3d', '#2d2d2d'],
-    activeGradient: ['#2d2d2d', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'office',
-    name: 'Office',
-    icon: '🏢',
-    category: 'focus',
-    premium: true,
-    gradient: ['#607d8b', '#455a64'],
-    activeGradient: ['#455a64', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  
-  // Ambient sounds
-  {
-    id: 'chimes',
-    name: 'Wind Chimes',
-    icon: '🎐',
-    category: 'ambient',
-    premium: true,
-    gradient: ['#9b59b6', '#8e44ad'],
-    activeGradient: ['#8e44ad', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'singing-bowl',
-    name: 'Singing Bowl',
-    icon: '🔔',
-    category: 'ambient',
-    premium: true,
-    gradient: ['#f1c40f', '#f39c12'],
-    activeGradient: ['#f39c12', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'space',
-    name: 'Space',
-    icon: '🚀',
-    category: 'ambient',
-    premium: true,
-    gradient: ['#0c0c1e', '#1a1a3e'],
-    activeGradient: ['#1a1a3e', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-  {
-    id: 'underwater',
-    name: 'Underwater',
-    icon: '🐠',
-    category: 'ambient',
-    premium: true,
-    gradient: ['#006994', '#004466'],
-    activeGradient: ['#004466', '#e94560'],
-    url: 'https://cdn.freesound.org/previews/placeholder.mp3', // TODO: Replace with real sound URL
-  },
-];
+  createSound('birds', 'Birds', '🐦', 'nature', false),
+  createSound('forest', 'Forest', '🌲', 'nature', false),
+  createSound('river', 'River', '🏞️', 'nature', true),
+  createSound('wind', 'Wind', '💨', 'nature', true),
+  createSound('campfire', 'Campfire', '🔥', 'nature', true),
 
-// Count free vs premium
+  // Focus sounds
+  createSound('coffee-shop', 'Coffee Shop', '☕', 'focus', false),
+  createSound('library', 'Library', '📚', 'focus', false),
+  createSound('keyboard', 'Typing', '⌨️', 'focus', true),
+  createSound('office', 'Office', '🏢', 'focus', true),
+
+  // Ambient sounds
+  createSound('chimes', 'Wind Chimes', '🎐', 'ambient', true),
+  createSound('singing-bowl', 'Singing Bowl', '🔔', 'ambient', true),
+  createSound('space', 'Space', '🌌', 'ambient', true),
+  createSound('underwater', 'Underwater', '🐠', 'ambient', true),
+] as const;
+
+// =============================================================================
+// COMPUTED VALUES
+// =============================================================================
+
 export const FREE_SOUNDS_COUNT = SOUNDS.filter(s => !s.premium).length;
 export const PREMIUM_SOUNDS_COUNT = SOUNDS.filter(s => s.premium).length;
+export const TOTAL_SOUNDS_COUNT = SOUNDS.length;
+
+// Helper to get sounds by category
+export const getSoundsByCategory = (categoryId: CategoryId): Sound[] =>
+  SOUNDS.filter(s => s.category === categoryId);
+
+// Helper to get a sound by ID
+export const getSoundById = (id: SoundId): Sound | undefined =>
+  SOUNDS.find(s => s.id === id);

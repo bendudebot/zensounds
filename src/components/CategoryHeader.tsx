@@ -1,9 +1,18 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../constants/theme';
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface CategoryHeaderProps {
   title: string;
   icon: string;
 }
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
 
 export function CategoryHeader({ title, icon }: CategoryHeaderProps) {
   return (
@@ -14,20 +23,25 @@ export function CategoryHeader({ title, icon }: CategoryHeaderProps) {
   );
 }
 
+// =============================================================================
+// STYLES
+// =============================================================================
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    gap: 8,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
   },
   icon: {
-    fontSize: 20,
+    fontSize: LAYOUT.iconSize.lg,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontSize: TYPOGRAPHY.size.xl,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    color: COLORS.text.primary,
+    letterSpacing: -0.3,
   },
 });

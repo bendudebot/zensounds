@@ -6,10 +6,26 @@ import Animated, {
   useSharedValue, 
   withSpring,
   withRepeat,
+  withSequence,
   withTiming,
+  Easing,
 } from 'react-native-reanimated';
+
 import { useSoundStore } from '../stores/soundStore';
 import { Sound } from '../constants/sounds';
+import { 
+  COLORS, 
+  SPACING, 
+  TYPOGRAPHY, 
+  RADIUS, 
+  SHADOWS,
+  LAYOUT,
+  ANIMATION,
+} from '../constants/theme';
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 interface SoundCardProps {
   sound: Sound;
@@ -18,61 +34,77 @@ interface SoundCardProps {
   isLocked: boolean;
 }
 
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
 export function SoundCard({ sound, isPlaying, isPremium, isLocked }: SoundCardProps) {
   const { toggleSound } = useSoundStore();
   const scale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.3);
+  const glowOpacity = useSharedValue(0);
+
+  // Start glow animation when playing
+  if (isPlaying && glowOpacity.value === 0) {
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.15, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  } else if (!isPlaying) {
+    glowOpacity.value = withTiming(0, { duration: ANIMATION.duration.normal });
+  }
 
   const handlePress = async () => {
     if (isLocked) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      // TODO: Show premium modal
+      // TODO: Navigate to premium screen
       return;
     }
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    scale.value = withSpring(0.95, {}, () => {
-      scale.value = withSpring(1);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Gentle press animation
+    scale.value = withSpring(0.96, ANIMATION.spring.gentle, () => {
+      scale.value = withSpring(1, ANIMATION.spring.gentle);
     });
     
     toggleSound(sound.id);
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const animatedCardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    opacity: isPlaying ? withRepeat(
-      withTiming(0.8, { duration: 1000 }),
-      -1,
-      true
-    ) : 0,
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
   }));
 
   return (
     <Pressable onPress={handlePress}>
-      <Animated.View style={[styles.card, animatedStyle]}>
+      <Animated.View style={[styles.card, animatedCardStyle]}>
         <LinearGradient
-          colors={isPlaying ? sound.activeGradient : sound.gradient}
+          colors={isPlaying ? [...sound.activeGradient] : [...sound.gradient]}
           style={styles.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* Playing indicator pulse */}
-          <Animated.View style={[styles.pulse, pulseStyle]} />
+          {/* Soft glow when playing */}
+          <Animated.View style={[styles.glow, animatedGlowStyle]} />
           
-          {/* Lock icon for premium */}
+          {/* Lock overlay for premium */}
           {isLocked && (
-            <View style={styles.lockBadge}>
+            <View style={styles.lockOverlay}>
               <Text style={styles.lockIcon}>🔒</Text>
             </View>
           )}
           
-          {/* Icon */}
+          {/* Sound icon */}
           <Text style={styles.icon}>{sound.icon}</Text>
           
-          {/* Name */}
+          {/* Sound name */}
           <Text style={styles.name}>{sound.name}</Text>
           
           {/* Premium badge */}
@@ -81,59 +113,87 @@ export function SoundCard({ sound, isPlaying, isPremium, isLocked }: SoundCardPr
               <Text style={styles.premiumBadgeText}>PRO</Text>
             </View>
           )}
+
+          {/* Playing indicator */}
+          {isPlaying && (
+            <View style={styles.playingIndicator}>
+              <View style={styles.playingDot} />
+            </View>
+          )}
         </LinearGradient>
       </Animated.View>
     </Pressable>
   );
 }
 
+// =============================================================================
+// STYLES
+// =============================================================================
+
 const styles = StyleSheet.create({
   card: {
-    width: 120,
-    height: 140,
-    borderRadius: 20,
+    width: LAYOUT.soundCard.width,
+    height: LAYOUT.soundCard.height,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
+    ...SHADOWS.card,
   },
   gradient: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    padding: SPACING.lg,
+    position: 'relative',
   },
-  pulse: {
+  glow: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+    backgroundColor: COLORS.text.inverse,
+    borderRadius: RADIUS.xl,
   },
-  icon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  lockBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.black[20],
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   lockIcon: {
-    fontSize: 16,
+    fontSize: LAYOUT.iconSize.xl,
+  },
+  icon: {
+    fontSize: LAYOUT.iconSize.emoji,
+    marginBottom: SPACING.md,
+  },
+  name: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    color: COLORS.text.primary,
+    textAlign: 'center',
+    opacity: 0.9,
   },
   premiumBadge: {
     position: 'absolute',
-    bottom: 8,
-    backgroundColor: '#e94560',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    bottom: SPACING.md,
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
   },
   premiumBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.text.inverse,
+    letterSpacing: 0.5,
+  },
+  playingIndicator: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+  },
+  playingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.success,
   },
 });
