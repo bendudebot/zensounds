@@ -1,16 +1,26 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { SoundCard } from '../components/SoundCard';
 import { CategoryHeader } from '../components/CategoryHeader';
 import { NowPlaying } from '../components/NowPlaying';
 import { TimerButton } from '../components/TimerButton';
 import { useSoundStore } from '../stores/soundStore';
-import { SOUNDS, CATEGORIES, getSoundsByCategory } from '../constants/sounds';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS, LAYOUT } from '../constants/theme';
+import { CATEGORIES, getSoundsByCategory } from '../constants/sounds';
+import { 
+  COLORS, 
+  SPACING, 
+  TYPOGRAPHY, 
+  RADIUS, 
+  LAYOUT,
+  GLASS,
+  SHADOWS,
+  ANIMATION,
+} from '../constants/theme';
 
 // =============================================================================
 // HELPERS
@@ -35,12 +45,20 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient
-      colors={[COLORS.background.start, COLORS.background.middle, COLORS.background.end]}
+      colors={[
+        COLORS.background.gradientStart,
+        COLORS.background.gradientMiddle,
+        COLORS.background.gradientEnd,
+      ]}
+      locations={[0, 0.5, 1]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+        <Animated.View 
+          entering={FadeIn.duration(ANIMATION.duration.gentle)} 
+          style={styles.header}
+        >
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.title}>ZenSounds</Text>
@@ -52,7 +70,9 @@ export default function HomeScreen() {
                 style={styles.premiumBtn}
                 onPress={() => router.push('/premium')}
               >
-                <Text style={styles.premiumText}>✨ PRO</Text>
+                <BlurView intensity={GLASS.blur.medium} tint="light" style={styles.premiumBlur}>
+                  <Text style={styles.premiumText}>✨ PRO</Text>
+                </BlurView>
               </Pressable>
             )}
           </View>
@@ -70,33 +90,38 @@ export default function HomeScreen() {
             return (
               <Animated.View 
                 key={category.id} 
-                entering={FadeIn.delay(index * 100).duration(500)}
+                entering={FadeInDown.delay(index * 120).duration(ANIMATION.duration.slow)}
                 style={styles.categorySection}
               >
                 <CategoryHeader 
                   title={category.name} 
                   icon={category.icon}
+                  description={category.description}
                 />
                 <ScrollView 
                   horizontal 
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.soundsRow}
                 >
-                  {categorySounds.map((sound) => (
-                    <SoundCard
+                  {categorySounds.map((sound, soundIndex) => (
+                    <Animated.View
                       key={sound.id}
-                      sound={sound}
-                      isPlaying={playingIds.includes(sound.id)}
-                      isPremium={sound.premium}
-                      isLocked={sound.premium && !isPremium}
-                    />
+                      entering={FadeIn.delay((index * 120) + (soundIndex * 50)).duration(ANIMATION.duration.normal)}
+                    >
+                      <SoundCard
+                        sound={sound}
+                        isPlaying={playingIds.includes(sound.id)}
+                        isPremium={sound.premium}
+                        isLocked={sound.premium && !isPremium}
+                      />
+                    </Animated.View>
                   ))}
                 </ScrollView>
               </Animated.View>
             );
           })}
           
-          {/* Bottom spacer for NowPlaying bar */}
+          {/* Bottom spacer */}
           <View style={styles.bottomSpacer} />
         </ScrollView>
 
@@ -122,19 +147,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: LAYOUT.screenPadding,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.xxl,
   },
   greeting: {
-    fontSize: TYPOGRAPHY.size.sm,
+    fontSize: TYPOGRAPHY.size.md,
     fontWeight: TYPOGRAPHY.weight.medium,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   title: {
-    fontSize: TYPOGRAPHY.size.xxxl,
+    fontSize: TYPOGRAPHY.size.display,
     fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.text.primary,
     letterSpacing: -0.5,
@@ -145,13 +170,16 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   premiumBtn: {
-    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.round,
+    overflow: 'hidden',
+    ...SHADOWS.sm,
+  },
+  premiumBlur: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.round,
   },
   premiumText: {
-    color: COLORS.text.inverse,
+    color: COLORS.accent,
     fontWeight: TYPOGRAPHY.weight.semibold,
     fontSize: TYPOGRAPHY.size.sm,
   },
@@ -162,13 +190,13 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
   },
   categorySection: {
-    marginBottom: SPACING.xxxl,
+    marginBottom: SPACING.section,
   },
   soundsRow: {
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.md,
+    paddingHorizontal: LAYOUT.screenPadding,
+    gap: SPACING.lg,
   },
   bottomSpacer: {
-    height: LAYOUT.nowPlayingHeight + LAYOUT.nowPlayingBottomPadding + SPACING.xl,
+    height: LAYOUT.nowPlayingHeight + LAYOUT.nowPlayingBottomPadding + SPACING.xxl,
   },
 });

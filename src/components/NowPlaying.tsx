@@ -18,6 +18,8 @@ import {
   RADIUS,
   LAYOUT,
   ANIMATION,
+  GLASS,
+  SHADOWS,
 } from '../constants/theme';
 
 // =============================================================================
@@ -40,7 +42,7 @@ export function NowPlaying() {
   const handleStopAll = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    stopButtonScale.value = withSpring(0.9, ANIMATION.spring.gentle, () => {
+    stopButtonScale.value = withSpring(0.85, ANIMATION.spring.soft, () => {
       stopButtonScale.value = withSpring(1, ANIMATION.spring.gentle);
     });
     
@@ -55,42 +57,50 @@ export function NowPlaying() {
 
   return (
     <Animated.View 
-      entering={FadeInDown.duration(ANIMATION.duration.normal).springify()}
+      entering={FadeInDown.duration(ANIMATION.duration.slow).springify()}
       exiting={FadeOutDown.duration(ANIMATION.duration.fast)}
       style={styles.container}
     >
-      <BlurView intensity={80} tint="light" style={styles.blur}>
-        <View style={styles.content}>
-          {/* Playing sounds icons */}
-          <View style={styles.soundIcons}>
-            {playingSounds.slice(0, MAX_VISIBLE_ICONS).map((sound) => (
-              <View key={sound.id} style={styles.iconWrapper}>
-                <Text style={styles.soundIcon}>{sound.icon}</Text>
-              </View>
-            ))}
-            {hiddenCount > 0 && (
-              <View style={styles.moreWrapper}>
-                <Text style={styles.moreText}>+{hiddenCount}</Text>
-              </View>
-            )}
+      {/* Outer glow */}
+      <View style={styles.glowEffect} />
+      
+      {/* Glass panel */}
+      <View style={styles.panel}>
+        <BlurView intensity={GLASS.blur.heavy} tint="light" style={styles.blur}>
+          <View style={styles.content}>
+            {/* Playing sounds icons */}
+            <View style={styles.soundIcons}>
+              {playingSounds.slice(0, MAX_VISIBLE_ICONS).map((sound) => (
+                <View key={sound.id} style={styles.iconWrapper}>
+                  <Text style={styles.soundIcon}>{sound.icon}</Text>
+                </View>
+              ))}
+              {hiddenCount > 0 && (
+                <View style={styles.moreWrapper}>
+                  <Text style={styles.moreText}>+{hiddenCount}</Text>
+                </View>
+              )}
+            </View>
+            
+            {/* Text info */}
+            <View style={styles.textContainer}>
+              <Text style={styles.nowPlaying}>Now Playing</Text>
+              <Text style={styles.soundNames} numberOfLines={1}>
+                {soundNames}
+              </Text>
+            </View>
+            
+            {/* Stop button */}
+            <Pressable onPress={handleStopAll}>
+              <Animated.View style={[styles.stopButton, stopButtonStyle]}>
+                <BlurView intensity={GLASS.blur.light} tint="light" style={styles.stopBlur}>
+                  <Text style={styles.stopIcon}>⏹</Text>
+                </BlurView>
+              </Animated.View>
+            </Pressable>
           </View>
-          
-          {/* Playing text */}
-          <View style={styles.textContainer}>
-            <Text style={styles.nowPlaying}>Now Playing</Text>
-            <Text style={styles.soundNames} numberOfLines={1}>
-              {soundNames}
-            </Text>
-          </View>
-          
-          {/* Stop button */}
-          <Pressable onPress={handleStopAll}>
-            <Animated.View style={[styles.stopButton, stopButtonStyle]}>
-              <Text style={styles.stopIcon}>⏹</Text>
-            </Animated.View>
-          </Pressable>
-        </View>
-      </BlurView>
+        </BlurView>
+      </View>
     </Animated.View>
   );
 }
@@ -108,11 +118,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingBottom: LAYOUT.nowPlayingBottomPadding,
   },
-  blur: {
+  glowEffect: {
+    position: 'absolute',
+    top: 4,
+    left: SPACING.lg + 4,
+    right: SPACING.lg + 4,
+    bottom: LAYOUT.nowPlayingBottomPadding + 4,
+    borderRadius: RADIUS.xxl,
+    backgroundColor: COLORS.primary.subtle,
+    ...SHADOWS.glow,
+  },
+  panel: {
     borderRadius: RADIUS.xxl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.white[20],
+    borderColor: COLORS.glass.border,
+    ...SHADOWS.lg,
+  },
+  blur: {
+    overflow: 'hidden',
   },
   content: {
     flexDirection: 'row',
@@ -126,26 +150,28 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.white[50],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.glass.light,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.glass.border,
   },
   soundIcon: {
     fontSize: LAYOUT.iconSize.md,
   },
   moreWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.neutral[200],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.glass.medium,
     alignItems: 'center',
     justifyContent: 'center',
   },
   moreText: {
-    fontSize: TYPOGRAPHY.size.xs,
+    fontSize: TYPOGRAPHY.size.sm,
     fontWeight: TYPOGRAPHY.weight.semibold,
     color: COLORS.text.secondary,
   },
@@ -159,7 +185,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.muted,
     marginBottom: 2,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   soundNames: {
     fontSize: TYPOGRAPHY.size.md,
@@ -167,16 +193,17 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   stopButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.error,
+    borderRadius: RADIUS.round,
+    overflow: 'hidden',
+  },
+  stopBlur: {
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: 0.9,
+    backgroundColor: 'rgba(255, 155, 155, 0.3)',
   },
   stopIcon: {
     fontSize: LAYOUT.iconSize.md,
-    color: COLORS.text.inverse,
   },
 });

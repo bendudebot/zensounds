@@ -18,6 +18,7 @@ import {
   RADIUS, 
   SHADOWS,
   ANIMATION,
+  GLASS,
 } from '../constants/theme';
 
 // =============================================================================
@@ -61,7 +62,7 @@ export function TimerButton() {
 
   const handleOpenModal = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    buttonScale.value = withSpring(0.95, ANIMATION.spring.gentle, () => {
+    buttonScale.value = withSpring(0.92, ANIMATION.spring.soft, () => {
       buttonScale.value = withSpring(1, ANIMATION.spring.gentle);
     });
     setShowModal(true);
@@ -82,11 +83,17 @@ export function TimerButton() {
   return (
     <>
       <Pressable onPress={handleOpenModal}>
-        <Animated.View style={[styles.button, isActive && styles.buttonActive, buttonStyle]}>
-          <Text style={styles.icon}>⏰</Text>
-          {timerRemaining !== null && (
-            <Text style={styles.timerText}>{formatTimeRemaining(timerRemaining)}</Text>
-          )}
+        <Animated.View style={[styles.buttonWrapper, buttonStyle]}>
+          <BlurView 
+            intensity={GLASS.blur.medium} 
+            tint="light" 
+            style={[styles.button, isActive && styles.buttonActive]}
+          >
+            <Text style={styles.icon}>⏰</Text>
+            {timerRemaining !== null && (
+              <Text style={styles.timerText}>{formatTimeRemaining(timerRemaining)}</Text>
+            )}
+          </BlurView>
         </Animated.View>
       </Pressable>
 
@@ -103,30 +110,35 @@ export function TimerButton() {
           <Animated.View 
             entering={FadeIn.duration(ANIMATION.duration.fast)}
             exiting={FadeOut.duration(ANIMATION.duration.fast)}
-            style={styles.modalContent}
           >
-            <Text style={styles.modalTitle}>Sleep Timer</Text>
-            <Text style={styles.modalSubtitle}>
-              Sounds will gently fade out after the selected time
-            </Text>
-            
-            <View style={styles.optionsGrid}>
-              {TIMER_OPTIONS.map((option) => {
-                const isSelected = timerMinutes === option.minutes;
-                
-                return (
-                  <Pressable
-                    key={option.minutes}
-                    style={[styles.optionButton, isSelected && styles.optionActive]}
-                    onPress={() => handleSelectTimer(option.minutes)}
-                  >
-                    <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <Pressable onPress={e => e.stopPropagation()}>
+              <View style={styles.modalCard}>
+                <BlurView intensity={GLASS.blur.ultra} tint="light" style={styles.modalBlur}>
+                  <Text style={styles.modalTitle}>Sleep Timer</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Sounds will gently fade after the selected time
+                  </Text>
+                  
+                  <View style={styles.optionsGrid}>
+                    {TIMER_OPTIONS.map((option) => {
+                      const isSelected = timerMinutes === option.minutes;
+                      
+                      return (
+                        <Pressable
+                          key={option.minutes}
+                          style={[styles.optionButton, isSelected && styles.optionActive]}
+                          onPress={() => handleSelectTimer(option.minutes)}
+                        >
+                          <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                            {option.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </BlurView>
+              </View>
+            </Pressable>
           </Animated.View>
         </Pressable>
       </Modal>
@@ -139,23 +151,23 @@ export function TimerButton() {
 // =============================================================================
 
 const styles = StyleSheet.create({
+  buttonWrapper: {
+    borderRadius: RADIUS.round,
+    overflow: 'hidden',
+    ...SHADOWS.sm,
+  },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white[50],
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.round,
     gap: SPACING.xs,
-    borderWidth: 1,
-    borderColor: COLORS.neutral[200],
   },
   buttonActive: {
-    backgroundColor: COLORS.primary.light,
-    borderColor: COLORS.primary.main,
+    backgroundColor: COLORS.primary.subtle,
   },
   icon: {
-    fontSize: 16,
+    fontSize: 18,
   },
   timerText: {
     color: COLORS.text.primary,
@@ -164,18 +176,22 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: COLORS.black[50],
+    backgroundColor: COLORS.glass.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
   },
-  modalContent: {
-    backgroundColor: COLORS.background.card,
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.xxl,
+  modalCard: {
     width: '100%',
     maxWidth: 340,
+    borderRadius: RADIUS.xxxl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.glass.border,
     ...SHADOWS.lg,
+  },
+  modalBlur: {
+    padding: SPACING.xxl,
   },
   modalTitle: {
     fontSize: TYPOGRAPHY.size.xxl,
@@ -198,15 +214,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionButton: {
-    backgroundColor: COLORS.neutral[100],
+    backgroundColor: COLORS.glass.subtle,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.lg,
     borderRadius: RADIUS.lg,
-    minWidth: 90,
+    minWidth: 95,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.glass.borderSubtle,
   },
   optionActive: {
     backgroundColor: COLORS.primary.main,
+    borderColor: COLORS.primary.main,
   },
   optionText: {
     color: COLORS.text.primary,

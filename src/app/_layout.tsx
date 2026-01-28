@@ -35,6 +35,7 @@ export default function RootLayout() {
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',
+            animationDuration: ANIMATION.duration.slow,
           }}
         />
       </Stack>
@@ -49,9 +50,9 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.start,
+    backgroundColor: COLORS.background.gradientStart,
   },
   content: {
-    backgroundColor: COLORS.background.start,
+    backgroundColor: COLORS.background.gradientStart,
   },
 });

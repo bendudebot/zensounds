@@ -1,4 +1,4 @@
-import { SOUND_GRADIENTS } from './theme';
+import { SOUND_TINTS, SoundTintId } from './theme';
 
 // =============================================================================
 // TYPES
@@ -10,8 +10,7 @@ export interface Sound {
   icon: string;
   category: CategoryId;
   premium: boolean;
-  gradient: readonly [string, string];
-  activeGradient: readonly [string, string];
+  tint: { base: string; active: string };
   url: string;
 }
 
@@ -19,6 +18,7 @@ export interface Category {
   id: CategoryId;
   name: string;
   icon: string;
+  description: string;
 }
 
 // Type-safe IDs
@@ -35,21 +35,24 @@ export type SoundId =
 // =============================================================================
 
 export const CATEGORIES: readonly Category[] = [
-  { id: 'sleep', name: 'Sleep', icon: '🌙' },
-  { id: 'nature', name: 'Nature', icon: '🌿' },
-  { id: 'focus', name: 'Focus', icon: '🎯' },
-  { id: 'ambient', name: 'Ambient', icon: '✨' },
+  { id: 'sleep', name: 'Sleep', icon: '🌙', description: 'Drift off peacefully' },
+  { id: 'nature', name: 'Nature', icon: '🌿', description: 'Sounds of the earth' },
+  { id: 'focus', name: 'Focus', icon: '✨', description: 'Enhance concentration' },
+  { id: 'ambient', name: 'Ambient', icon: '🔮', description: 'Ethereal soundscapes' },
 ] as const;
 
 // =============================================================================
 // SOUND DATA
 // =============================================================================
 
-// Base URL for sound files (replace with actual CDN in production)
+// Base URL for sound files
 const SOUND_BASE_URL = 'https://cdn.freesound.org/previews';
 const PLACEHOLDER_URL = `${SOUND_BASE_URL}/placeholder.mp3`;
 
-// Helper to create sound object with less repetition
+// Default tint for missing sounds
+const DEFAULT_TINT = { base: 'rgba(180, 190, 210, 0.25)', active: 'rgba(180, 190, 210, 0.45)' };
+
+// Helper to create sound object
 const createSound = (
   id: SoundId,
   name: string,
@@ -63,13 +66,12 @@ const createSound = (
   icon,
   category,
   premium,
-  gradient: SOUND_GRADIENTS[id]?.default ?? ['#E0E5F0', '#D0D5E0'],
-  activeGradient: SOUND_GRADIENTS[id]?.active ?? ['#D0D5E0', '#C0C5D0'],
+  tint: SOUND_TINTS[id as SoundTintId] ?? DEFAULT_TINT,
   url,
 });
 
 export const SOUNDS: readonly Sound[] = [
-  // Sleep sounds (mostly free)
+  // Sleep sounds
   createSound('rain', 'Rain', '🌧️', 'sleep', false),
   createSound('thunder', 'Thunder', '⛈️', 'sleep', false),
   createSound('ocean', 'Ocean Waves', '🌊', 'sleep', false),
@@ -79,7 +81,7 @@ export const SOUNDS: readonly Sound[] = [
   // Nature sounds
   createSound('birds', 'Birds', '🐦', 'nature', false),
   createSound('forest', 'Forest', '🌲', 'nature', false),
-  createSound('river', 'River', '🏞️', 'nature', true),
+  createSound('river', 'River', '💧', 'nature', true),
   createSound('wind', 'Wind', '💨', 'nature', true),
   createSound('campfire', 'Campfire', '🔥', 'nature', true),
 
@@ -97,17 +99,18 @@ export const SOUNDS: readonly Sound[] = [
 ] as const;
 
 // =============================================================================
-// COMPUTED VALUES
+// HELPERS
 // =============================================================================
 
 export const FREE_SOUNDS_COUNT = SOUNDS.filter(s => !s.premium).length;
 export const PREMIUM_SOUNDS_COUNT = SOUNDS.filter(s => s.premium).length;
 export const TOTAL_SOUNDS_COUNT = SOUNDS.length;
 
-// Helper to get sounds by category
 export const getSoundsByCategory = (categoryId: CategoryId): Sound[] =>
   SOUNDS.filter(s => s.category === categoryId);
 
-// Helper to get a sound by ID
 export const getSoundById = (id: SoundId): Sound | undefined =>
   SOUNDS.find(s => s.id === id);
+
+export const getCategoryById = (id: CategoryId): Category | undefined =>
+  CATEGORIES.find(c => c.id === id);

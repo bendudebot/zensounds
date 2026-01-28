@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
@@ -18,6 +19,7 @@ import {
   SHADOWS,
   ANIMATION,
   LAYOUT,
+  GLASS,
 } from '../constants/theme';
 
 // =============================================================================
@@ -33,12 +35,11 @@ interface Feature {
 const FEATURES: readonly Feature[] = [
   { icon: '🎵', title: `${PREMIUM_SOUNDS_COUNT}+ Premium Sounds`, desc: 'Unlock the full sound library' },
   { icon: '🎚️', title: 'Sound Mixer', desc: 'Create your perfect blend' },
-  { icon: '🚫', title: 'No Ads', desc: 'Pure, distraction-free experience' },
+  { icon: '🚫', title: 'Ad-Free Experience', desc: 'Pure, distraction-free calm' },
   { icon: '⏰', title: 'Advanced Timers', desc: 'Custom durations & schedules' },
-  { icon: '🌙', title: 'Background Play', desc: 'Continues when you sleep' },
+  { icon: '🌙', title: 'Background Play', desc: 'Continues while you sleep' },
 ] as const;
 
-// Fallback prices for dev mode
 const FALLBACK_YEARLY_PRICE = '$29.99';
 const FALLBACK_MONTHLY_PRICE = '$3.99';
 const YEARLY_MONTHLY_EQUIVALENT = 2.50;
@@ -77,12 +78,9 @@ export default function PremiumScreen() {
     try {
       if (pkg) {
         const success = await purchasePackage(pkg);
-        if (success) {
-          handleSuccess();
-        }
+        if (success) handleSuccess();
       } else {
-        // Dev mode fallback
-        handleSuccess();
+        handleSuccess(); // Dev mode
       }
     } catch (error) {
       console.error('Purchase error:', error);
@@ -115,24 +113,29 @@ export default function PremiumScreen() {
     router.back();
   };
 
-  // Find packages
   const monthlyPkg = packages.find(p => p.identifier === '$rc_monthly');
   const yearlyPkg = packages.find(p => p.identifier === '$rc_annual');
   const hasPackages = packages.length > 0;
 
   return (
     <LinearGradient
-      colors={[COLORS.background.start, COLORS.background.middle, COLORS.background.end]}
+      colors={[
+        COLORS.background.gradientStart,
+        COLORS.background.gradientMiddle,
+        COLORS.background.gradientEnd,
+      ]}
+      locations={[0, 0.5, 1]}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
         {/* Close button */}
-        <Pressable 
-          style={styles.closeButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.closeIcon}>✕</Text>
-        </Pressable>
+        <Animated.View entering={FadeIn.delay(200)} style={styles.closeWrapper}>
+          <Pressable onPress={() => router.back()}>
+            <BlurView intensity={GLASS.blur.medium} tint="light" style={styles.closeButton}>
+              <Text style={styles.closeIcon}>✕</Text>
+            </BlurView>
+          </Pressable>
+        </Animated.View>
 
         <ScrollView 
           style={styles.scrollView}
@@ -140,7 +143,7 @@ export default function PremiumScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <Animated.View entering={FadeIn.duration(ANIMATION.duration.slow)} style={styles.header}>
+          <Animated.View entering={FadeIn.duration(ANIMATION.duration.gentle)} style={styles.header}>
             <Text style={styles.emoji}>✨</Text>
             <Text style={styles.title}>ZenSounds Pro</Text>
             <Text style={styles.subtitle}>
@@ -154,12 +157,15 @@ export default function PremiumScreen() {
               <Animated.View 
                 key={feature.title}
                 entering={FadeInUp.delay(index * 80).duration(ANIMATION.duration.normal)}
-                style={styles.featureRow}
               >
-                <Text style={styles.featureIcon}>{feature.icon}</Text>
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDesc}>{feature.desc}</Text>
+                <View style={styles.featureCard}>
+                  <BlurView intensity={GLASS.blur.light} tint="light" style={styles.featureBlur}>
+                    <Text style={styles.featureIcon}>{feature.icon}</Text>
+                    <View style={styles.featureText}>
+                      <Text style={styles.featureTitle}>{feature.title}</Text>
+                      <Text style={styles.featureDesc}>{feature.desc}</Text>
+                    </View>
+                  </BlurView>
                 </View>
               </Animated.View>
             ))}
@@ -170,38 +176,44 @@ export default function PremiumScreen() {
             <ActivityIndicator size="large" color={COLORS.primary.main} style={styles.loader} />
           ) : (
             <Animated.View 
-              entering={FadeInUp.delay(400).duration(ANIMATION.duration.normal)}
+              entering={FadeInUp.delay(FEATURES.length * 80).duration(ANIMATION.duration.normal)}
               style={styles.pricingContainer}
             >
               {/* Yearly - Best Value */}
               <Pressable 
-                style={[styles.priceCard, styles.priceCardBest]}
+                style={styles.priceCardWrapper}
                 onPress={() => handlePurchase(yearlyPkg)}
                 disabled={purchasing}
               >
                 <View style={styles.bestBadge}>
-                  <Text style={styles.bestBadgeText}>BEST VALUE</Text>
+                  <BlurView intensity={GLASS.blur.medium} tint="light" style={styles.bestBadgeBlur}>
+                    <Text style={styles.bestBadgeText}>BEST VALUE</Text>
+                  </BlurView>
                 </View>
-                <Text style={styles.priceTitle}>Yearly</Text>
-                <Text style={styles.price}>
-                  {hasPackages && yearlyPkg ? yearlyPkg.product.priceString : FALLBACK_YEARLY_PRICE}
-                </Text>
-                <Text style={styles.priceSubtext}>
-                  ${YEARLY_MONTHLY_EQUIVALENT.toFixed(2)}/month · Save {YEARLY_SAVINGS_PERCENT}%
-                </Text>
+                <BlurView intensity={GLASS.blur.medium} tint="light" style={styles.priceCardBest}>
+                  <Text style={styles.priceTitle}>Yearly</Text>
+                  <Text style={styles.price}>
+                    {hasPackages && yearlyPkg ? yearlyPkg.product.priceString : FALLBACK_YEARLY_PRICE}
+                  </Text>
+                  <Text style={styles.priceSubtext}>
+                    ${YEARLY_MONTHLY_EQUIVALENT.toFixed(2)}/month · Save {YEARLY_SAVINGS_PERCENT}%
+                  </Text>
+                </BlurView>
               </Pressable>
 
               {/* Monthly */}
               <Pressable 
-                style={styles.priceCard}
+                style={styles.priceCardWrapper}
                 onPress={() => handlePurchase(monthlyPkg)}
                 disabled={purchasing}
               >
-                <Text style={styles.priceTitle}>Monthly</Text>
-                <Text style={styles.price}>
-                  {hasPackages && monthlyPkg ? monthlyPkg.product.priceString : FALLBACK_MONTHLY_PRICE}
-                </Text>
-                <Text style={styles.priceSubtext}>Billed monthly</Text>
+                <BlurView intensity={GLASS.blur.light} tint="light" style={styles.priceCard}>
+                  <Text style={styles.priceTitle}>Monthly</Text>
+                  <Text style={styles.price}>
+                    {hasPackages && monthlyPkg ? monthlyPkg.product.priceString : FALLBACK_MONTHLY_PRICE}
+                  </Text>
+                  <Text style={styles.priceSubtext}>Billed monthly</Text>
+                </BlurView>
               </Pressable>
             </Animated.View>
           )}
@@ -209,8 +221,10 @@ export default function PremiumScreen() {
           {/* Purchasing overlay */}
           {purchasing && (
             <View style={styles.purchasingOverlay}>
-              <ActivityIndicator size="large" color={COLORS.primary.main} />
-              <Text style={styles.purchasingText}>Processing...</Text>
+              <BlurView intensity={GLASS.blur.heavy} tint="light" style={styles.purchasingBlur}>
+                <ActivityIndicator size="large" color={COLORS.primary.main} />
+                <Text style={styles.purchasingText}>Processing...</Text>
+              </BlurView>
             </View>
           )}
 
@@ -246,17 +260,19 @@ const styles = StyleSheet.create({
   safeArea: { 
     flex: 1,
   },
-  closeButton: {
+  closeWrapper: {
     position: 'absolute',
     top: 60,
-    right: SPACING.xl,
+    right: LAYOUT.screenPadding,
     zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.neutral[100],
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   closeIcon: { 
     fontSize: TYPOGRAPHY.size.lg, 
@@ -266,7 +282,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: { 
-    padding: SPACING.xl, 
+    padding: LAYOUT.screenPadding, 
     paddingTop: SPACING.section,
   },
   header: { 
@@ -274,7 +290,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xxxl,
   },
   emoji: { 
-    fontSize: 64, 
+    fontSize: 72, 
     marginBottom: SPACING.lg,
   },
   title: { 
@@ -293,13 +309,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xxxl,
     gap: SPACING.md,
   },
-  featureRow: {
+  featureCard: {
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.glass.border,
+    ...SHADOWS.sm,
+  },
+  featureBlur: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background.card,
     padding: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    ...SHADOWS.sm,
   },
   featureIcon: { 
     fontSize: LAYOUT.iconSize.xl, 
@@ -322,35 +342,46 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.section,
   },
   pricingContainer: { 
-    gap: SPACING.md, 
+    gap: SPACING.lg, 
     marginBottom: SPACING.xxl,
   },
-  priceCard: {
-    backgroundColor: COLORS.background.card,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xxl,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+  priceCardWrapper: {
+    borderRadius: RADIUS.xxl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.glass.border,
     ...SHADOWS.md,
   },
+  priceCard: {
+    padding: SPACING.xxl,
+    alignItems: 'center',
+  },
   priceCardBest: {
-    borderColor: COLORS.primary.main,
-    backgroundColor: COLORS.primary[50],
+    padding: SPACING.xxl,
+    alignItems: 'center',
+    backgroundColor: COLORS.primary.subtle,
+    borderWidth: 2,
+    borderColor: COLORS.primary.light,
+    borderRadius: RADIUS.xxl - 1,
   },
   bestBadge: {
     position: 'absolute',
-    top: -12,
-    backgroundColor: COLORS.primary.main,
+    top: -14,
+    alignSelf: 'center',
+    zIndex: 10,
+    borderRadius: RADIUS.round,
+    overflow: 'hidden',
+  },
+  bestBadgeBlur: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.primary.main,
   },
   bestBadgeText: { 
     color: COLORS.text.inverse, 
     fontSize: TYPOGRAPHY.size.xs, 
     fontWeight: TYPOGRAPHY.weight.bold,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   priceTitle: { 
     fontSize: TYPOGRAPHY.size.xl, 
@@ -360,30 +391,32 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   price: { 
-    fontSize: 36, 
+    fontSize: 40, 
     fontWeight: TYPOGRAPHY.weight.bold, 
     color: COLORS.text.primary, 
     marginBottom: SPACING.xs,
+    letterSpacing: -1,
   },
   priceSubtext: { 
     fontSize: TYPOGRAPHY.size.md, 
     color: COLORS.text.secondary,
   },
   purchasingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.background.overlay,
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.xl,
+    zIndex: 100,
+  },
+  purchasingBlur: {
+    padding: SPACING.xxxl,
+    borderRadius: RADIUS.xxl,
+    alignItems: 'center',
   },
   purchasingText: { 
     color: COLORS.text.primary, 
     marginTop: SPACING.lg, 
     fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.medium,
   },
   restoreButton: { 
     alignItems: 'center', 
@@ -398,7 +431,8 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.sm, 
     color: COLORS.text.muted, 
     textAlign: 'center', 
-    lineHeight: 18,
+    lineHeight: 20,
     paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.huge,
   },
 });

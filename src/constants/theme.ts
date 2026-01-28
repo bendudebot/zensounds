@@ -1,95 +1,112 @@
 /**
  * ZenSounds Theme Constants
  * 
- * Design Philosophy: Modern, calm, minimal
- * Inspired by Calm & Headspace but more minimal
+ * Design Philosophy: Apple Glassmorphism
+ * Inspired by iOS Weather, visionOS, with Calm/Headspace serenity
  */
 
 // =============================================================================
-// COLORS
+// COLORS - Soft, translucent, calming
 // =============================================================================
 
 export const COLORS = {
-  // Primary palette - soft, calming blues
+  // Primary - soft sky blue
   primary: {
-    50: '#f0f7ff',
-    100: '#e0efff',
-    200: '#b8dbff',
-    300: '#7ac0ff',
-    400: '#3aa0ff',
-    500: '#0a7cff',
-    600: '#0062d6',
-    main: '#5B7FFF',      // Primary accent
-    light: '#8BA3FF',
-    dark: '#3D5ACC',
+    main: '#6B9FFF',
+    light: '#A3C4FF',
+    dark: '#4A7FE0',
+    subtle: 'rgba(107, 159, 255, 0.15)',
   },
 
-  // Secondary - soft sage/teal for nature elements
-  secondary: {
-    main: '#7BB5A3',
-    light: '#A8D4C6',
-    dark: '#5A9485',
-  },
-
-  // Background gradients - soft, ethereal
+  // Background - gradient for depth
   background: {
-    start: '#F8FAFF',     // Very soft blue-white
-    middle: '#EEF4FF',    // Soft lavender hint
-    end: '#E8F0FE',       // Gentle blue
-    card: '#FFFFFF',
-    overlay: 'rgba(255, 255, 255, 0.95)',
+    // Soft gradient stops (light mode)
+    gradientStart: '#E8F4FF',    // Soft sky blue
+    gradientMiddle: '#F0F4FF',   // Lavender mist
+    gradientEnd: '#E0EAFF',      // Gentle periwinkle
+    
+    // Solid fallbacks
+    primary: '#EDF3FF',
+    secondary: '#F5F8FF',
   },
 
-  // Dark mode (for night use)
-  backgroundDark: {
-    start: '#1A1F35',
-    middle: '#141929',
-    end: '#0F1220',
-    card: 'rgba(255, 255, 255, 0.08)',
-    overlay: 'rgba(0, 0, 0, 0.85)',
+  // Glass effects - the magic ✨
+  glass: {
+    // Card backgrounds
+    light: 'rgba(255, 255, 255, 0.55)',
+    medium: 'rgba(255, 255, 255, 0.35)',
+    subtle: 'rgba(255, 255, 255, 0.20)',
+    
+    // Borders for glass panels
+    border: 'rgba(255, 255, 255, 0.60)',
+    borderSubtle: 'rgba(255, 255, 255, 0.30)',
+    
+    // Overlays
+    overlay: 'rgba(255, 255, 255, 0.85)',
+    overlayDark: 'rgba(0, 0, 0, 0.25)',
   },
 
-  // Text colors
+  // Text - soft, not harsh black
   text: {
-    primary: '#1A2138',
-    secondary: '#6B7394',
-    muted: '#9CA3C2',
+    primary: '#1A2744',         // Deep blue-gray
+    secondary: '#5A6B8A',       // Muted blue-gray
+    muted: '#8B9BB8',           // Light blue-gray
     inverse: '#FFFFFF',
+    onGlass: '#2A3A5A',         // For text on glass
   },
 
-  // Semantic colors
-  accent: '#8B7FF5',      // Soft purple for premium
-  success: '#6BBF8A',
-  warning: '#F5B97F',
-  error: '#E57373',
+  // Semantic colors - soft versions
+  accent: '#9D8FFF',            // Soft lavender for premium
+  success: '#7DD3A8',           // Soft mint
+  warning: '#FFD08A',           // Soft amber
+  error: '#FF9B9B',             // Soft coral
 
-  // Neutrals
-  neutral: {
-    50: '#FAFBFC',
-    100: '#F4F6F9',
-    200: '#E8ECF2',
-    300: '#D1D8E4',
-    400: '#A8B4C8',
-    500: '#7A8AA5',
-    600: '#5C6B82',
-    700: '#3D4A5E',
-    800: '#252F3E',
-    900: '#131A26',
+  // Sound category tints (for glass cards)
+  tint: {
+    sleep: 'rgba(147, 170, 255, 0.25)',    // Soft indigo
+    nature: 'rgba(134, 214, 172, 0.25)',   // Soft green
+    focus: 'rgba(255, 198, 145, 0.25)',    // Soft amber
+    ambient: 'rgba(192, 170, 255, 0.25)',  // Soft purple
   },
 
-  // Transparency utilities
-  white: {
-    10: 'rgba(255, 255, 255, 0.1)',
-    20: 'rgba(255, 255, 255, 0.2)',
-    50: 'rgba(255, 255, 255, 0.5)',
-    80: 'rgba(255, 255, 255, 0.8)',
+  // Utility
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+} as const;
+
+// =============================================================================
+// GLASS STYLES - Reusable glass panel configurations
+// =============================================================================
+
+export const GLASS = {
+  // Standard glass card (sound cards, feature cards)
+  card: {
+    backgroundColor: COLORS.glass.light,
+    borderWidth: 1,
+    borderColor: COLORS.glass.border,
   },
 
-  black: {
-    5: 'rgba(0, 0, 0, 0.05)',
-    10: 'rgba(0, 0, 0, 0.1)',
-    20: 'rgba(0, 0, 0, 0.2)',
-    50: 'rgba(0, 0, 0, 0.5)',
+  // Subtle glass (now playing bar, modals)
+  panel: {
+    backgroundColor: COLORS.glass.medium,
+    borderWidth: 1,
+    borderColor: COLORS.glass.borderSubtle,
+  },
+
+  // Floating element (buttons, badges)
+  floating: {
+    backgroundColor: COLORS.glass.subtle,
+    borderWidth: 0.5,
+    borderColor: COLORS.glass.border,
+  },
+
+  // Blur intensities
+  blur: {
+    light: 20,
+    medium: 40,
+    heavy: 80,
+    ultra: 100,
   },
 } as const;
 
@@ -106,6 +123,7 @@ export const SPACING = {
   xxl: 24,
   xxxl: 32,
   section: 40,
+  huge: 48,
 } as const;
 
 // =============================================================================
@@ -113,7 +131,6 @@ export const SPACING = {
 // =============================================================================
 
 export const TYPOGRAPHY = {
-  // Font weights
   weight: {
     regular: '400' as const,
     medium: '500' as const,
@@ -121,7 +138,6 @@ export const TYPOGRAPHY = {
     bold: '700' as const,
   },
 
-  // Font sizes
   size: {
     xs: 10,
     sm: 12,
@@ -130,60 +146,76 @@ export const TYPOGRAPHY = {
     xl: 18,
     xxl: 24,
     xxxl: 28,
-    display: 32,
+    display: 34,
   },
 
-  // Line heights
   lineHeight: {
-    tight: 1.2,
+    tight: 1.1,
     normal: 1.4,
     relaxed: 1.6,
   },
 } as const;
 
 // =============================================================================
-// BORDERS & RADII
+// BORDERS & RADII - Generous, Apple-style
 // =============================================================================
 
 export const RADIUS = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
+  sm: 12,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  xxl: 28,
+  xxxl: 32,
   round: 9999,
 } as const;
 
 // =============================================================================
-// SHADOWS
+// SHADOWS - Ultra soft, almost imperceptible
 // =============================================================================
 
 export const SHADOWS = {
-  sm: {
-    shadowColor: '#1A2138',
+  // Subtle lift
+  xs: {
+    shadowColor: '#4A6FA5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
   },
-  md: {
-    shadowColor: '#1A2138',
+
+  // Soft card shadow
+  sm: {
+    shadowColor: '#4A6FA5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 2,
   },
-  lg: {
-    shadowColor: '#1A2138',
+
+  // Medium elevation
+  md: {
+    shadowColor: '#4A6FA5',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 4,
   },
-  card: {
-    shadowColor: '#5B7FFF',
+
+  // Floating panels
+  lg: {
+    shadowColor: '#4A6FA5',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+
+  // Glass glow effect
+  glow: {
+    shadowColor: '#6B9FFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 4,
   },
@@ -194,19 +226,18 @@ export const SHADOWS = {
 // =============================================================================
 
 export const ANIMATION = {
-  // Durations (ms)
   duration: {
-    fast: 150,
-    normal: 300,
+    instant: 100,
+    fast: 200,
+    normal: 350,
     slow: 500,
-    verySlow: 800,
+    gentle: 700,
   },
 
-  // Spring configs for reanimated
   spring: {
-    gentle: { damping: 20, stiffness: 150 },
-    bouncy: { damping: 12, stiffness: 180 },
-    stiff: { damping: 25, stiffness: 300 },
+    gentle: { damping: 20, stiffness: 120, mass: 1 },
+    soft: { damping: 18, stiffness: 100, mass: 1 },
+    bouncy: { damping: 12, stiffness: 150, mass: 0.8 },
   },
 } as const;
 
@@ -215,119 +246,62 @@ export const ANIMATION = {
 // =============================================================================
 
 export const LAYOUT = {
-  // Card dimensions
+  // Glass card dimensions
   soundCard: {
-    width: 140,
-    height: 160,
+    width: 150,
+    height: 170,
   },
 
-  // Header
-  headerHeight: 60,
-
   // Now playing bar
-  nowPlayingHeight: 80,
+  nowPlayingHeight: 76,
   nowPlayingBottomPadding: 34,
-
-  // Max content widths
-  maxContentWidth: 500,
 
   // Icon sizes
   iconSize: {
-    sm: 16,
-    md: 20,
-    lg: 24,
+    xs: 14,
+    sm: 18,
+    md: 22,
+    lg: 26,
     xl: 32,
     xxl: 40,
-    emoji: 48,
+    emoji: 52,
   },
+
+  // Screen padding
+  screenPadding: 20,
 } as const;
 
 // =============================================================================
-// SOUND CARD GRADIENTS - Soft, pastel versions
+// SOUND CARD TINTS - Soft color overlays for glass cards
 // =============================================================================
 
-export const SOUND_GRADIENTS = {
-  // Sleep - soft indigo/purple
-  rain: {
-    default: ['#B8C5FF', '#9AA8FF'] as [string, string],
-    active: ['#8BA3FF', '#6B8AFF'] as [string, string],
-  },
-  thunder: {
-    default: ['#B0BAC9', '#8E9AAD'] as [string, string],
-    active: ['#8E9AAD', '#6E7A8D'] as [string, string],
-  },
-  ocean: {
-    default: ['#9DD1F5', '#7BBFEF'] as [string, string],
-    active: ['#7BBFEF', '#5AADE9'] as [string, string],
-  },
-  fan: {
-    default: ['#C5CAD4', '#A8AEB8'] as [string, string],
-    active: ['#A8AEB8', '#8B919B'] as [string, string],
-  },
-  whitenoise: {
-    default: ['#D4D8E0', '#B8BCC4'] as [string, string],
-    active: ['#B8BCC4', '#9CA0A8'] as [string, string],
-  },
+export const SOUND_TINTS = {
+  // Sleep - soft blues and indigos
+  rain: { base: 'rgba(147, 170, 255, 0.30)', active: 'rgba(147, 170, 255, 0.50)' },
+  thunder: { base: 'rgba(130, 150, 190, 0.30)', active: 'rgba(130, 150, 190, 0.50)' },
+  ocean: { base: 'rgba(120, 190, 230, 0.30)', active: 'rgba(120, 190, 230, 0.50)' },
+  fan: { base: 'rgba(170, 180, 200, 0.25)', active: 'rgba(170, 180, 200, 0.45)' },
+  whitenoise: { base: 'rgba(180, 185, 195, 0.25)', active: 'rgba(180, 185, 195, 0.45)' },
 
-  // Nature - soft greens and blues
-  birds: {
-    default: ['#A8E0C4', '#8AD4B0'] as [string, string],
-    active: ['#8AD4B0', '#6CC89C'] as [string, string],
-  },
-  forest: {
-    default: ['#9BD4B0', '#7CC898'] as [string, string],
-    active: ['#7CC898', '#5EBC80'] as [string, string],
-  },
-  river: {
-    default: ['#A0D9EF', '#82CDE9'] as [string, string],
-    active: ['#82CDE9', '#64C1E3'] as [string, string],
-  },
-  wind: {
-    default: ['#D0E8F0', '#B4DCE8'] as [string, string],
-    active: ['#B4DCE8', '#98D0E0'] as [string, string],
-  },
-  campfire: {
-    default: ['#FFD4A8', '#FFC488'] as [string, string],
-    active: ['#FFC488', '#FFB468'] as [string, string],
-  },
+  // Nature - soft greens and teals
+  birds: { base: 'rgba(134, 214, 172, 0.30)', active: 'rgba(134, 214, 172, 0.50)' },
+  forest: { base: 'rgba(120, 200, 150, 0.30)', active: 'rgba(120, 200, 150, 0.50)' },
+  river: { base: 'rgba(130, 200, 220, 0.30)', active: 'rgba(130, 200, 220, 0.50)' },
+  wind: { base: 'rgba(180, 210, 230, 0.25)', active: 'rgba(180, 210, 230, 0.45)' },
+  campfire: { base: 'rgba(255, 180, 130, 0.30)', active: 'rgba(255, 180, 130, 0.50)' },
 
   // Focus - warm neutrals
-  'coffee-shop': {
-    default: ['#D4C4B0', '#C4B4A0'] as [string, string],
-    active: ['#C4B4A0', '#B4A490'] as [string, string],
-  },
-  library: {
-    default: ['#D8D0C4', '#C8C0B4'] as [string, string],
-    active: ['#C8C0B4', '#B8B0A4'] as [string, string],
-  },
-  keyboard: {
-    default: ['#C4C8D0', '#B4B8C0'] as [string, string],
-    active: ['#B4B8C0', '#A4A8B0'] as [string, string],
-  },
-  office: {
-    default: ['#C0D0DC', '#A8C0CC'] as [string, string],
-    active: ['#A8C0CC', '#90B0BC'] as [string, string],
-  },
+  'coffee-shop': { base: 'rgba(200, 170, 140, 0.30)', active: 'rgba(200, 170, 140, 0.50)' },
+  library: { base: 'rgba(190, 180, 160, 0.25)', active: 'rgba(190, 180, 160, 0.45)' },
+  keyboard: { base: 'rgba(170, 175, 190, 0.25)', active: 'rgba(170, 175, 190, 0.45)' },
+  office: { base: 'rgba(160, 185, 200, 0.25)', active: 'rgba(160, 185, 200, 0.45)' },
 
   // Ambient - soft purples and mystical
-  chimes: {
-    default: ['#D4C8F0', '#C4B8E8'] as [string, string],
-    active: ['#C4B8E8', '#B4A8E0'] as [string, string],
-  },
-  'singing-bowl': {
-    default: ['#F0E4C0', '#E8DCA8'] as [string, string],
-    active: ['#E8DCA8', '#E0D490'] as [string, string],
-  },
-  space: {
-    default: ['#B8C0D8', '#A0A8C8'] as [string, string],
-    active: ['#A0A8C8', '#8890B8'] as [string, string],
-  },
-  underwater: {
-    default: ['#9CC8E0', '#84BCD8'] as [string, string],
-    active: ['#84BCD8', '#6CB0D0'] as [string, string],
-  },
+  chimes: { base: 'rgba(192, 170, 255, 0.30)', active: 'rgba(192, 170, 255, 0.50)' },
+  'singing-bowl': { base: 'rgba(255, 210, 150, 0.30)', active: 'rgba(255, 210, 150, 0.50)' },
+  space: { base: 'rgba(150, 160, 200, 0.30)', active: 'rgba(150, 160, 200, 0.50)' },
+  underwater: { base: 'rgba(130, 190, 210, 0.30)', active: 'rgba(130, 190, 210, 0.50)' },
 } as const;
 
 // Type exports
-export type ColorKey = keyof typeof COLORS;
-export type SpacingKey = keyof typeof SPACING;
+export type SoundTintId = keyof typeof SOUND_TINTS;
